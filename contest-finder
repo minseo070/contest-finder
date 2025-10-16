@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교외 경진대회 탐색기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .font-sans {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        /* 로딩 아이콘 애니메이션 */
+        .loader-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto p-4 sm:p-8 font-sans">
+        <header class="text-center py-6">
+            <h1 class="text-4xl font-extrabold text-indigo-700 tracking-tight flex items-center justify-center">
+                <!-- Trophy Icon SVG -->
+                <svg class="w-8 h-8 mr-3 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 9v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+                    <path d="M10 11d.01"></path>
+                    <path d="M14 11d.01"></path>
+                    <path d="M6 9h12"></path>
+                </svg>
+                교외 경진대회 탐색기
+            </h1>
+            <p class="mt-2 text-xl text-gray-600">
+                필터를 설정하고 관심 분야에 맞는 최신 대회 정보를 받아보세요.
+            </p>
+        </header>
+
+        <!-- 입력 및 검색 카드 -->
+        <div id="filter-card" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-indigo-100 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">🔍 맞춤 검색 필터 설정</h2>
+            
+            <!-- 1. 국내/해외 구분 -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">1. 국내/해외 구분 (필수)</label>
+                <div class="flex space-x-4" id="scope-buttons">
+                    <button id="btn-domestic" data-scope="domestic" class="flex-1 py-3 rounded-xl font-semibold transition duration-200 shadow-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        🇰🇷 국내 대회
+                    </button>
+                    <button id="btn-international" data-scope="international" class="flex-1 py-3 rounded-xl font-semibold transition duration-200 shadow-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        🌎 국제 대회
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 2. 상세 필터 컨테이너 (동적으로 채워짐) -->
+            <div id="detailed-filters">
+                <!-- JavaScript will inject domestic/international filters here -->
+            </div>
+            
+            <!-- 3. 공통 필터 및 검색어 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                
+                <!-- 대회 기간 선택 -->
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">2. 대회 기간 (시작일 ~ 마감일)</label>
+                    <div class="flex space-x-2">
+                        <input id="start-date" type="date" title="시작일" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm" />
+                        <input id="end-date" type="date" title="마감일" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm" />
+                    </div>
+                </div>
+                
+                <!-- 관심 분야 입력 (Query) -->
+                <div class="md:col-span-2">
+                    <label for="query-input" class="block text-sm font-medium text-gray-700 mb-1">3. 관심 분야 (필수 입력)</label>
+                    <input
+                        id="query-input"
+                        type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-base"
+                        placeholder="예: 'AI', '환경', '디자인', '논문'"
+                    />
+                </div>
+            </div>
+            
+            <!-- 검색 버튼 -->
+            <div class="mt-8 text-center">
+                <button id="search-button" class="w-full sm:w-80 px-10 py-3 text-lg font-bold rounded-xl shadow-lg transition duration-300 transform flex items-center justify-center mx-auto bg-gray-300 text-gray-500 cursor-not-allowed">
+                    <!-- Search Icon SVG -->
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    대회 정보 찾기
+                </button>
+            </div>
+        </div>
+
+        <!-- 결과 및 메시지 영역 -->
+        <div id="message-area" class="p-0">
+            <!-- Initial state message -->
+            <div id="initial-message" class="bg-white p-8 rounded-2xl shadow-md text-center text-gray-500 border border-gray-200">
+                <span role="img" aria-label="Magnifying Glass" class="text-5xl block mb-3">🔍</span>
+                <p class="text-lg font-semibold">지금 바로 맞춤 필터를 설정하고 대회를 찾아보세요!</p>
+                <p class="text-sm mt-1">AI가 실시간으로 최신 경진대회와 공모전 정보를 찾아드립니다.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="text/javascript">
+        // ----------------------------------------------------
+        // 1. 전역 상수 및 변수 설정
+        // ----------------------------------------------------
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+        const apiKey = ""; // 캔버스 환경에서 자동으로 채워짐
+        const MAX_RETRIES = 5;
+
+        // 상태 변수
+        let scope = ''; // 'domestic' or 'international'
+        let isLoading = false;
+
+        // 필터 데이터
+        const regions = ['전체 지역', '서울', '경기', '인천', '부산', '대구', '대전', '광주', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+        const sponsorTypes = [
+            { label: '주관 기관 선택 안 함', value: '' },
+            { label: '교육청/공공기관 주관', value: '교육청,공공기관' },
+            { label: '민간 기업/단체 주관', value: '민간기업,단체' },
+            { label: '모두 상관 없음', value: '공공기관,민간기업,단체' },
+        ];
+        
+        const continents = ['대륙 선택 안 함', '아시아', '북미', '유럽', '남미', '오세아니아', '아프리카'];
+        const countriesByContinent = {
+            '대륙 선택 안 함': ['국가 선택 안 함'],
+            '아시아': ['국가 선택 안 함', '한국', '일본', '중국', '싱가포르', '인도', '베트남'],
+            '북미': ['국가 선택 안 함', '미국', '캐나다', '멕시코'],
+            '유럽': ['국가 선택 안 함', '영국', '독일', '프랑스', '스위스', '네덜란드', '이탈리아'],
+            '남미': ['국가 선택 안 함', '브라질', '아르헨티나', '칠레'],
+            '오세아니아': ['국가 선택 안 함', '호주', '뉴질랜드'],
+            '아프리카': ['국가 선택 안 함', '남아프리카공화국', '이집트'],
+        };
+        
+        // DOM 요소
+        const detailedFiltersEl = document.getElementById('detailed-filters');
+        const searchButtonEl = document.getElementById('search-button');
+        const scopeButtonsEl = document.getElementById('scope-buttons');
+        const messageAreaEl = document.getElementById('message-area');
+
+        // ----------------------------------------------------
+        // 2. 유틸리티 함수
+        // ----------------------------------------------------
+
+        /**
+         * Markdown 텍스트를 HTML로 변환합니다. (링크, 리스트, 굵은 글씨 등 지원)
+         */
+        const convertMarkdownToHtml = (markdown) => {
+            let html = markdown || '';
+
+            // 굵은 글씨 (**text**)
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // 제목 (## Title)
+            html = html.replace(/^###\s*(.*)$/gm, '<h3 class="text-xl font-semibold mt-4 mb-2">$1</h3>');
+            html = html.replace(/^##\s*(.*)$/gm, '<h2 class="text-2xl font-bold mt-6 mb-3 border-b pb-1 text-indigo-600">$1</h2>');
+
+            // 리스트 항목 (-)
+            html = html.replace(/^\s*[\-\*]\s*(.*)$/gm, '<li class="ml-4 list-disc text-gray-700">$1</li>');
+            
+            // 숫자 리스트 항목 (1.)
+            html = html.replace(/^\s*\d\.\s*(.*)$/gm, '<li class="ml-4 list-decimal text-gray-700">$1</li>');
+            
+            // 단락 처리
+            html = html.split('\n\n').map(paragraph => {
+                if (paragraph.trim().length > 0 && 
+                    !paragraph.trim().match(/<h\d>|<li|<\/li>|<ul|<\/ul>|<ol|<\/ol>|```|\|/i)) {
+                    return `<p class="mt-3 mb-3">${paragraph}</p>`;
+                }
+                return paragraph;
+            }).join('');
+
+            // 코드 블록 (```language...```)
+            html = html.replace(/```.*?([\s\S]*?)```/g, '<pre class="bg-gray-100 p-3 rounded-lg overflow-auto text-sm my-4 font-mono"><code>$1</code></pre>');
+
+            // 링크 처리를 위해 <a> 태그를 허용
+            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-teal-600 hover:text-teal-800 underline font-medium">$1</a>');
+
+            return html;
+        };
+
+        /**
+         * 로딩 상태를 업데이트하고 버튼 UI를 변경합니다.
+         */
+        const updateLoadingState = (loading) => {
+            isLoading = loading;
+            const queryInputEl = document.getElementById('query-input');
+            const startDateEl = document.getElementById('start-date');
+            const endDateEl = document.getElementById('end-date');
+
+            if (isLoading) {
+                searchButtonEl.disabled = true;
+                queryInputEl.disabled = true;
+                startDateEl.disabled = true;
+                endDateEl.disabled = true;
+                searchButtonEl.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'hover:scale-[1.01]', 'active:scale-[0.99]');
+                searchButtonEl.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                searchButtonEl.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 mr-2 loader-spin" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path>
+                    </svg>
+                    최신 대회 검색 중...
+                `;
+            } else {
+                queryInputEl.disabled = false;
+                startDateEl.disabled = false;
+                endDateEl.disabled = false;
+                updateSearchButtonState();
+            }
+        };
+
+        /**
+         * 검색 버튼의 활성화/비활성화 상태를 업데이트합니다.
+         */
+        const updateSearchButtonState = () => {
+            const query = document.getElementById('query-input').value.trim();
+            const isDisabled = !scope || query === '' || isLoading;
+
+            searchButtonEl.disabled = isDisabled;
+
+            if (isDisabled) {
+                searchButtonEl.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'hover:scale-[1.01]', 'active:scale-[0.99]');
+                searchButtonEl.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                searchButtonEl.innerHTML = `
+                    <svg class="w-5 h-5 mr-2" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    대회 정보 찾기
+                `;
+            } else {
+                searchButtonEl.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                searchButtonEl.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'hover:scale-[1.01]', 'active:scale-[0.99]');
+                searchButtonEl.innerHTML = `
+                    <svg class="w-5 h-5 mr-2" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    대회 정보 찾기
+                `;
+            }
+        };
+
+        /**
+         * 에러 메시지를 화면에 표시합니다.
+         */
+        const displayError = (errorMessage) => {
+            messageAreaEl.innerHTML = `
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-md" role="alert">
+                    <p class="font-bold">⚠️ 오류 발생</p>
+                    <p>${errorMessage}</p>
+                </div>
+            `;
+        };
+        
+        /**
+         * 결과를 화면에 표시합니다.
+         */
+        const displayResults = (text, sources, query) => {
+            let sourcesHtml = '';
+            if (sources.length > 0) {
+                const listItems = sources.map(source => `
+                    <li>
+                        <a href="${source.uri}" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:text-indigo-600 underline">
+                            ${source.title || source.uri}
+                        </a>
+                    </li>
+                `).join('');
+                sourcesHtml = `
+                    <div class="mt-8 pt-4 border-t border-gray-200">
+                        <p class="font-semibold text-sm text-gray-600 mb-2">✅ 정보 출처 (Google Search 기반):</p>
+                        <ul class="list-disc list-inside text-xs text-gray-500 space-y-1">
+                            ${listItems}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            messageAreaEl.innerHTML = `
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-teal-100">
+                    <h2 class="text-3xl font-bold text-teal-700 mb-4 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-teal-500" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 9v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+                            <path d="M10 11d.01"></path>
+                            <path d="M14 11d.01"></path>
+                            <path d="M6 9h12"></path>
+                        </svg>
+                        "${query}" 관련 최신 대회 정보
+                    </h2>
+                    <div 
+                        class="text-gray-800 leading-relaxed space-y-4"
+                    >
+                        ${convertMarkdownToHtml(text)}
+                    </div>
+                    ${sourcesHtml}
+                </div>
+            `;
+        };
+
+
+        // ----------------------------------------------------
+        // 3. 필터 렌더링 및 이벤트 핸들러
+        // ----------------------------------------------------
+
+        /**
+         * 국내/해외 버튼 클릭 시 UI를 업데이트합니다.
+         */
+        const handleScopeChange = (newScope) => {
+            scope = newScope;
+            const btnDomestic = document.getElementById('btn-domestic');
+            const btnInternational = document.getElementById('btn-international');
+
+            [btnDomestic, btnInternational].forEach(btn => {
+                const isSelected = btn.dataset.scope === newScope;
+                btn.classList.toggle('bg-indigo-600', isSelected);
+                btn.classList.toggle('text-white', isSelected);
+                btn.classList.toggle('bg-gray-200', !isSelected);
+                btn.classList.toggle('text-gray-700', !isSelected);
+                btn.classList.toggle('hover:bg-gray-300', !isSelected);
+            });
+
+            renderDetailedFilters();
+            updateSearchButtonState();
+        };
+
+        /**
+         * 선택된 범위에 따라 상세 필터를 렌더링합니다.
+         */
+        const renderDetailedFilters = (initialRegion = '', initialSponsor = '', initialContinent = '', initialCountry = '') => {
+            detailedFiltersEl.innerHTML = '';
+            
+            if (scope === 'domestic') {
+                detailedFiltersEl.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 border border-gray-100 rounded-lg bg-indigo-50">
+                        <h3 class="col-span-full text-lg font-semibold text-indigo-700 mb-2">국내 대회 상세 조건</h3>
+                        
+                        <!-- 지역 선택 -->
+                        <div>
+                            <label for="region-select" class="block text-sm font-medium text-gray-700 mb-1">지역</label>
+                            <select id="region-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                ${regions.map(r => `<option value="${r}" ${r === initialRegion ? 'selected' : ''}>${r}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- 주관 기관 선택 -->
+                        <div class="sm:col-span-2">
+                            <label for="sponsor-select" class="block text-sm font-medium text-gray-700 mb-1">주관 기관 옵션</label>
+                            <select id="sponsor-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                ${sponsorTypes.map(s => `<option value="${s.value}" ${s.value === initialSponsor ? 'selected' : ''}>${s.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (scope === 'international') {
+                detailedFiltersEl.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 border border-gray-100 rounded-lg bg-indigo-50">
+                        <h3 class="col-span-full text-lg font-semibold text-indigo-700 mb-2">국제 대회 상세 조건</h3>
+                        
+                        <!-- 대륙 선택 -->
+                        <div>
+                            <label for="continent-select" class="block text-sm font-medium text-gray-700 mb-1">대륙</label>
+                            <select id="continent-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                ${continents.map(c => `<option value="${c}" ${c === initialContinent ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- 국가 선택 -->
+                        <div>
+                            <label for="country-select" class="block text-sm font-medium text-gray-700 mb-1">국가</label>
+                            <select id="country-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white" disabled>
+                                <!-- JavaScript will update options -->
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                // 국제 대회 필터가 렌더링된 후, 국가 선택 드롭다운 업데이트 및 이벤트 리스너 추가
+                const continentSelect = document.getElementById('continent-select');
+                if (continentSelect) {
+                    continentSelect.addEventListener('change', () => {
+                        updateCountrySelect(continentSelect.value);
+                    });
+                    
+                    // 초기 국가 목록 렌더링
+                    updateCountrySelect(continentSelect.value, initialCountry);
+                }
+            }
+        };
+        
+        /**
+         * 선택된 대륙에 따라 국가 드롭다운 옵션을 업데이트합니다.
+         */
+        const updateCountrySelect = (selectedContinent, initialCountry = '국가 선택 안 함') => {
+            const countrySelect = document.getElementById('country-select');
+            if (countrySelect) {
+                const countryList = countriesByContinent[selectedContinent] || countriesByContinent['대륙 선택 안 함'];
+                countrySelect.innerHTML = countryList.map(c => 
+                    `<option value="${c}" ${c === initialCountry ? 'selected' : ''}>${c}</option>`
+                ).join('');
+                
+                countrySelect.disabled = selectedContinent === '' || selectedContinent === '대륙 선택 안 함';
+            }
+        };
+
+        // ----------------------------------------------------
+        // 4. API 호출 로직
+        // ----------------------------------------------------
+        
+        /**
+         * Gemini API를 호출합니다 (지수 백오프 및 재시도 로직 포함).
+         */
+        async function callGeminiApi(payload, retries = 0) {
+            try {
+                const response = await fetch(`${API_URL}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retries < MAX_RETRIES) {
+                        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                        console.log(`Rate limit exceeded. Retrying in ${Math.round(delay / 1000)}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiApi(payload, retries + 1);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    return { text, sources };
+                } else {
+                    throw new Error("API 응답이 비어 있거나 예상치 못한 형식입니다.");
+                }
+            } catch (err) {
+                console.error("API 호출 중 오류 발생:", err);
+                throw new Error(`정보 검색에 실패했습니다: ${err.message}`);
+            }
+        }
+
+        /**
+         * 검색 로직을 실행합니다.
+         */
+        async function handleSearch() {
+            const query = document.getElementById('query-input').value.trim();
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (!scope) {
+                displayError('국내/해외 구분을 먼저 선택해야 합니다.');
+                return;
+            }
+            if (query === '') {
+                displayError('관심 분야를 입력해 주세요.');
+                return;
+            }
+
+            updateLoadingState(true);
+            messageAreaEl.innerHTML = ''; // Clear previous results
+
+            try {
+                // 1. 쿼리 빌드
+                let searchCriteria = [];
+                let systemInstructions = `사용자의 관심 분야(${query})와 다음 조건에 맞는 교외 대회(공모전, 해커톤 등) 3~5개를 찾아 한국어로 상세히 정리해 주세요.`;
+                let region = '';
+                let sponsorType = '';
+                let continent = '';
+                let selectedCountry = '';
+
+                if (scope === 'domestic') {
+                    region = document.getElementById('region-select')?.value || '';
+                    sponsorType = document.getElementById('sponsor-select')?.value || '';
+
+                    searchCriteria.push(`국내 대회`);
+                    if (region && region !== '전체 지역') searchCriteria.push(`지역: ${region}`);
+                    if (sponsorType) searchCriteria.push(`주관 기관: ${sponsorType}`);
+                } else if (scope === 'international') {
+                    continent = document.getElementById('continent-select')?.value || '';
+                    selectedCountry = document.getElementById('country-select')?.value || '';
+                    
+                    searchCriteria.push(`국제 대회`);
+                    if (continent && continent !== '대륙 선택 안 함') searchCriteria.push(`대륙: ${continent}`);
+                    if (selectedCountry && selectedCountry !== '국가 선택 안 함') searchCriteria.push(`국가: ${selectedCountry}`);
+                }
+                
+                // 날짜 범위 로직
+                let periodCriteria = '';
+                if (startDate && endDate) {
+                    periodCriteria = `대회 운영 기간이 ${startDate}부터 ${endDate} 사이에 포함되는 (접수 또는 개최) 대회`;
+                    searchCriteria.push(periodCriteria);
+                } else if (startDate) {
+                    periodCriteria = `대회 운영 기간이 ${startDate} 이후에 시작하는 대회`;
+                    searchCriteria.push(periodCriteria);
+                } else if (endDate) {
+                    periodCriteria = `대회 운영 기간이 ${endDate} 이전에 마감되는 대회`;
+                    searchCriteria.push(periodCriteria);
+                }
+
+                const criteriaString = searchCriteria.join(', ');
+                
+                // 2. 검색어 생성 (한국어와 영어 모두 사용)
+                const koreanQuery = `${criteriaString} ${query} 학생 대회 공모전 최신`;
+                const englishQuery = `${scope === 'international' ? (selectedCountry || continent) : 'korea'} ${query} student competition ${startDate ? startDate : 'now'} to ${endDate ? endDate : 'future'}`;
+
+                // 3. System Prompt & User Query
+                const finalSystemPrompt = `
+                    당신은 학생들을 위한 교외 대회 및 경진대회 정보를 전문으로 검색하고 요약하는 유용한 조수입니다.
+                    ${systemInstructions}
+                    검색 조건: ${criteriaString}.
+                    각 대회에 대해 다음 5가지 주요 정보와 웹사이트 주소(URL)를 포함하여 **보기 편한 Markdown 목록 형태**로 3~5개의 주요 정보만 간결하게 제시해야 합니다.
+                    필수 정보 항목: '대회명', '주최/주관', '참가 대상', '주요 일정 (접수 및 개최 기간)', '특징/주제', **'상세 링크(URL)'**.
+                    정보의 정확성을 위해 반드시 Google Search를 사용해야 합니다.
+                `;
+                
+                const userQuery = `검색어 "${query}"와 필터(${criteriaString})에 해당하는 현재 진행 중인 교외 대회 및 경진대회 정보를 찾아 Markdown 형식으로 정리해 주세요.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": { queries: [koreanQuery, englishQuery] } }], 
+                    systemInstruction: { parts: [{ text: finalSystemPrompt }] },
+                };
+
+                const { text, sources } = await callGeminiApi(payload);
+                displayResults(text, sources, query);
+                
+            } catch (e) {
+                displayError(e.message);
+            } finally {
+                updateLoadingState(false);
+            }
+        }
+        
+        // ----------------------------------------------------
+        // 5. 초기화 및 이벤트 리스너 설정
+        // ----------------------------------------------------
+
+        /**
+         * 애플리케이션 초기화 함수
+         */
+        const initializeUI = () => {
+            // 1. 국내/해외 버튼 리스너
+            document.getElementById('btn-domestic').addEventListener('click', () => handleScopeChange('domestic'));
+            document.getElementById('btn-international').addEventListener('click', () => handleScopeChange('international'));
+            
+            // 2. 검색 버튼 리스너
+            searchButtonEl.addEventListener('click', handleSearch);
+
+            // 3. 관심 분야 입력 필드 엔터 키 리스너
+            const queryInputEl = document.getElementById('query-input');
+            queryInputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !searchButtonEl.disabled) {
+                    handleSearch();
+                }
+            });
+
+            // 4. 필터 및 검색어 변경 시 검색 버튼 상태 업데이트 리스너
+            queryInputEl.addEventListener('input', updateSearchButtonState);
+            document.getElementById('start-date').addEventListener('input', updateSearchButtonState);
+            document.getElementById('end-date').addEventListener('input', updateSearchButtonState);
+
+            // 초기 상태 업데이트
+            updateSearchButtonState();
+        };
+
+        window.onload = initializeUI;
+    </script>
+</body>
+</html>
